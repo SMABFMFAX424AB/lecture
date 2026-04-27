@@ -2,6 +2,35 @@ import java.util.*;
 
 public class ImmutableSet<T> implements Set<T> {
 
+    private static class ImmutableSetNode<T>{
+        final T element;
+        final ImmutableSetNode<T> next;
+
+        ImmutableSetNode(T element, ImmutableSetNode<T> next){
+            this.element = element;
+            this.next = next;
+        }
+    }
+
+    final ImmutableSetNode<T> root;
+
+    public ImmutableSet(){
+        this.root = null;
+    }
+
+    public ImmutableSet(Collection<T> c){
+        if(c == null || c.isEmpty()){
+            this.root = null;
+        }else{
+            Iterator<T> iterator = c.iterator();
+            ImmutableSetNode<T> current = new ImmutableSetNode(iterator.next(), null);
+            while(iterator.hasNext()){
+                current = new ImmutableSetNode(iterator.next(), current);
+            }
+            root = current;
+        }
+    }
+    
     @Override
     public int size() {
         // TODO Auto-generated method stub
