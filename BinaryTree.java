@@ -3,21 +3,24 @@ import java.util.stream.*;
 
 public class BinaryTree<T extends Comparable<T>> {
 
-    private final Optional<BinaryTreeNode<T>> root;
+    private final Optional<? extends BinaryTreeNode<T>> root;
 
-    public BinaryTree(final BinaryTreeNode<T> root) {
-        this(Optional.of(root));
+    private final BinaryTreeFactory<T> treeFactory;
+
+    public BinaryTree(final BinaryTreeNode<T> root, final BinaryTreeFactory<T> treeFactory) {
+        this(Optional.of(root), treeFactory);
     }
 
-    public BinaryTree(final Optional<BinaryTreeNode<T>> root) {
+    public BinaryTree(final Optional<? extends BinaryTreeNode<T>> root, final BinaryTreeFactory<T> treeFactory) {
         this.root = root;
+        this.treeFactory = treeFactory;
     }
 
     public BinaryTree<T> add(final T value) {
         if (this.isEmpty()) {
-            return new BinaryTree<T>(Optional.of(new BinaryTreeNode<T>(value)));
+            return this.treeFactory.create(value);
         }
-        return new BinaryTree<T>(this.root.get().add(value));
+        return this.treeFactory.create(Optional.of(this.root.get().add(value)));
     }
 
     public boolean contains(final T value) {
@@ -72,7 +75,7 @@ public class BinaryTree<T extends Comparable<T>> {
         if (this.isEmpty()) {
             return this;
         }
-        return new BinaryTree<T>(this.root.get().remove(value));
+        return this.treeFactory.create(this.root.get().remove(value));
     }
 
     public int size() {

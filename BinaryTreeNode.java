@@ -5,21 +5,17 @@ import java.util.stream.*;
 
 public class BinaryTreeNode<T extends Comparable<T>> implements SearchTreeNode<T> {
 
-    protected static <T extends Comparable<T>> int height(final Optional<?extends SearchTreeNode<T>> node) {
+    protected static <T extends Comparable<T>> int height(final Optional<?extends BinaryTreeNode<T>> node) {
         return node.isEmpty() ? 0 : node.get().getHeight();
     }
 
     protected final Optional<?extends BinaryTreeNode<T>> leftChild;
 
+    protected final BinaryTreeNodeFactory<T> nodeFactory;
+
     protected final Optional<?extends BinaryTreeNode<T>> rightChild;
 
     protected final T value;
-    
-    protected final BinaryTreeNodeFactory<T> nodeFactory;
-
-    public BinaryTreeNode(final T value, final BinaryTreeNodeFactory<T> nodeFactory) {
-        this(value, Optional.empty(), Optional.empty(), nodeFactory);
-    }
 
     public BinaryTreeNode(
         final T value,
@@ -30,10 +26,14 @@ public class BinaryTreeNode<T extends Comparable<T>> implements SearchTreeNode<T
         this(value, Optional.of(leftChild), Optional.of(rightChild), nodeFactory);
     }
 
+    public BinaryTreeNode(final T value, final BinaryTreeNodeFactory<T> nodeFactory) {
+        this(value, Optional.empty(), Optional.empty(), nodeFactory);
+    }
+
     public BinaryTreeNode(
         final T value,
-        final Optional<?extends SearchTreeNode<T>> leftChild,
-        final Optional<?extends SearchTreeNode<T>> rightChild,
+        final Optional<?extends BinaryTreeNode<T>> leftChild,
+        final Optional<?extends BinaryTreeNode<T>> rightChild,
         final BinaryTreeNodeFactory<T> nodeFactory
     ) {
         this.value = value;
@@ -42,15 +42,16 @@ public class BinaryTreeNode<T extends Comparable<T>> implements SearchTreeNode<T
         this.nodeFactory = nodeFactory;
     }
 
+    @Override
     public BinaryTreeNode<T> add(final T value) {
         if (this.value.compareTo(value) < 0) {
             if (this.rightChild.isEmpty()) {
-                return this.setRightChild(new BinaryTreeNode<T>(value));
+                return this.setRightChild(this.nodeFactory.create(value));
             }
             return this.setRightChild(this.rightChild.get().add(value));
         }
         if (this.leftChild.isEmpty()) {
-            return this.setLeftChild(new BinaryTreeNode<T>(value));
+            return this.setLeftChild(this.nodeFactory.create(value));
         }
         return this.setLeftChild(this.leftChild.get().add(value));
     }
@@ -82,6 +83,7 @@ public class BinaryTreeNode<T extends Comparable<T>> implements SearchTreeNode<T
         return Math.max(BinaryTreeNode.height(this.leftChild), BinaryTreeNode.height(this.rightChild)) + 1;
     }
 
+    @Override
     public T getMin() {
         BinaryTreeNode<T> current = this;
         while (current.leftChild.isPresent()) {
@@ -97,7 +99,8 @@ public class BinaryTreeNode<T extends Comparable<T>> implements SearchTreeNode<T
             + this.rightChild.hashCode() * 2;
     }
 
-    public Optional<BinaryTreeNode<T>> remove(final T value) {
+    @Override
+    public Optional<? extends BinaryTreeNode<T>> remove(final T value) {
         final int comparison = this.value.compareTo(value);
         if (comparison == 0) {
             if (this.leftChild.isEmpty()) {
@@ -110,7 +113,7 @@ public class BinaryTreeNode<T extends Comparable<T>> implements SearchTreeNode<T
                 return Optional.of(this.leftChild.get());
             }
             final T min = this.rightChild.get().getMin();
-            return Optional.of(new BinaryTreeNode<T>(min, this.leftChild, this.rightChild.get().remove(min)));
+            return Optional.of(this.nodeFactory.create(min, this.leftChild, this.rightChild.get().remove(min)));
         }
         if (comparison < 0) {
             if (this.rightChild.isEmpty()) {
@@ -132,16 +135,16 @@ public class BinaryTreeNode<T extends Comparable<T>> implements SearchTreeNode<T
         return this.nodeFactory.create(this.value, leftChild, this.rightChild);
     }
 
-    public SearchTreeNode<T> setRightChild(final BinaryTreeNode<T> rightChild) {
+    public BinaryTreeNode<T> setRightChild(final BinaryTreeNode<T> rightChild) {
         return this.setRightChild(Optional.of(rightChild));
     }
 
-    public SearchTreeNode<T> setRightChild(final Optional<?extends BinaryTreeNode<T>> rightChild) {
+    public BinaryTreeNode<T> setRightChild(final Optional<?extends BinaryTreeNode<T>> rightChild) {
         return this.nodeFactory.create(this.value, this.leftChild, rightChild);
     }
 
     public BinaryTreeNode<T> setValue(final T value) {
-        return new BinaryTreeNode<T>(value, this.leftChild, this.rightChild);
+        return this.nodeFactory.create(value, this.leftChild, this.rightChild);
     }
 
     public int size() {
